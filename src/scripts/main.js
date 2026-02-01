@@ -2,21 +2,35 @@
 
 const firstPromise = new Promise((resolve, reject) => {
   document.addEventListener('click', (ev) => {
-    resolve();
+    resolve('First promise was resolved');
   });
 
   setTimeout(() => {
-    reject(new Error());
+    reject(new Error('First promise was rejected'));
   }, 3000);
 });
 
 const secondPromise = new Promise((resolve, reject) => {
-  document.addEventListener('click', (ev) => {
-    ev.preventDefault();
+  let leftClicked = false;
+  let rightClicked = false;
 
-    if (ev.button === 0 || ev.button === 3) {
-      resolve();
+  function checkAndResolve() {
+    if (leftClicked || rightClicked) {
+      resolve('Second promise was resolved');
     }
+  }
+
+  // Лівий клік
+  document.addEventListener('click', (ev) => {
+    leftClicked = true;
+    checkAndResolve();
+  });
+
+  // Правий клік
+  document.addEventListener('contextmenu', (ev) => {
+    ev.preventDefault();
+    rightClicked = true;
+    checkAndResolve();
   });
 });
 
@@ -26,7 +40,7 @@ const thirdPromise = new Promise((resolve, reject) => {
 
   function checkAndResolve() {
     if (leftClicked && rightClicked) {
-      resolve();
+      resolve('Third promise was resolved');
     }
   }
 
@@ -45,19 +59,19 @@ const thirdPromise = new Promise((resolve, reject) => {
 });
 
 firstPromise
-  .then(() => {
-    notifications('success', 'First promise was resolved');
+  .then((message) => {
+    notifications('success', message);
   })
-  .catch(() => {
-    notifications('error', 'First promise was rejected');
+  .catch((message) => {
+    notifications('error', message);
   });
 
-secondPromise.then(() => {
-  notifications('success', 'Second promise was resolved');
+secondPromise.then((message) => {
+  notifications('success', message);
 });
 
-thirdPromise.then(() => {
-  notifications('success', 'Third promise was resolved');
+thirdPromise.then((message) => {
+  notifications('success', message);
 });
 
 function notifications(type, text) {
