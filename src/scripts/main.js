@@ -1,69 +1,125 @@
 'use strict';
 
 const firstPromise = new Promise((resolve, reject) => {
-  document.addEventListener('click', (ev) => {
-    resolve('First promise was resolved');
-  });
+  let timeoutId = setTimeout(() => {
+    if (isSettled) {
+      return;
+    }
 
-  setTimeout(() => {
+    isSettled = true;
+
     reject(new Error('First promise was rejected'));
+    cleanup();
+  }, 3000);
+
+  let isSettled = false;
+
+  function handleClick() {
+    if (isSettled) {
+      return;
+    }
+
+    isSettled = true;
+
+    resolve('First promise was resolved');
+    cleanup();
+  }
+
+  function cleanup() {
+    document.removeEventListener('click', handleClick);
+
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+  }
+
+  document.addEventListener('click', handleClick);
+
+  timeoutId = setTimeout(() => {
+    if (isSettled) {
+      return;
+    }
+
+    isSettled = true;
+
+    reject(new Error('First promise was rejected'));
+    cleanup();
   }, 3000);
 });
 
 const secondPromise = new Promise((resolve, reject) => {
   let leftClicked = false;
   let rightClicked = false;
+  let isResolved = false;
 
-  function checkAndResolve() {
-    if (leftClicked || rightClicked) {
-      resolve('Second promise was resolved');
-    }
-  }
-
-  // Лівий клік
-  document.addEventListener('click', (ev) => {
+  function handleLeftClick() {
     leftClicked = true;
     checkAndResolve();
-  });
+  }
 
-  // Правий клік
-  document.addEventListener('contextmenu', (ev) => {
+  function handleRightClick(ev) {
     ev.preventDefault();
     rightClicked = true;
     checkAndResolve();
-  });
+  }
+
+  function checkAndResolve() {
+    if ((leftClicked || rightClicked) && !isResolved) {
+      isResolved = true;
+      resolve('Second promise was resolved');
+      cleanup();
+    }
+  }
+
+  function cleanup() {
+    document.removeEventListener('click', handleLeftClick);
+    document.removeEventListener('contextmenu', handleRightClick);
+  }
+
+  document.addEventListener('click', handleLeftClick);
+  document.addEventListener('contextmenu', handleRightClick);
 });
 
 const thirdPromise = new Promise((resolve, reject) => {
   let leftClicked = false;
   let rightClicked = false;
+  let isResolved = false;
 
-  function checkAndResolve() {
-    if (leftClicked && rightClicked) {
-      resolve('Third promise was resolved');
-    }
-  }
-
-  // Лівий клік
-  document.addEventListener('click', (ev) => {
+  function handleLeftClick() {
     leftClicked = true;
     checkAndResolve();
-  });
+  }
 
-  // Правий клік
-  document.addEventListener('contextmenu', (ev) => {
+  function handleRightClick(ev) {
     ev.preventDefault();
     rightClicked = true;
     checkAndResolve();
-  });
+  }
+
+  function checkAndResolve() {
+    if (leftClicked && rightClicked && !isResolved) {
+      isResolved = true;
+      resolve('Third promise was resolved');
+      cleanup();
+    }
+  }
+
+  function cleanup() {
+    document.removeEventListener('click', handleLeftClick);
+    document.removeEventListener('contextmenu', handleRightClick);
+  }
+
+  document.addEventListener('click', handleLeftClick);
+  document.addEventListener('contextmenu', handleRightClick);
 });
 
+// Обробники залишаються без змін
 firstPromise
   .then((message) => {
     notifications('success', message);
   })
-  .catch((message) => {
-    notifications('error', message);
+  .catch((error) => {
+    notifications('error', error.message);
   });
 
 secondPromise.then((message) => {
